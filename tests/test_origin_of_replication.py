@@ -1,5 +1,5 @@
 import unittest
-from origin_of_replication.pattern_count import hammingDistance
+from utils import hammingDistance
 
 class OriginOfReplicationTest(unittest.TestCase):
 
