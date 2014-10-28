@@ -1,4 +1,6 @@
-_SYMBOLS = ['A', 'C', 'G', 'T']
+# coding=utf-8
+_NUCLEOTIDES = ['A', 'C', 'G', 'T']
+
 
 
 
@@ -10,6 +12,7 @@ def patternToNumber(pattern):
     """
     if not pattern:
         return 0
+
     symbol = pattern[-1]
     pattern = pattern[:-1]
     return (4 * patternToNumber(pattern)) + symbolToNumber(symbol)
@@ -20,13 +23,13 @@ def symbolToNumber(symbol):
     """
     Converts an A, C, G, or T into a number according to its lexicographic order
     """
-    if symbol in _SYMBOLS:
-        return _SYMBOLS.index(symbol)
+    if symbol in _NUCLEOTIDES:
+        return _NUCLEOTIDES.index(symbol)
 
 
 
 def numberToSymbol(number):
-    return _SYMBOLS[int(number % 4)]
+    return _NUCLEOTIDES[int(number % 4)]
 
 
 def numberToPattern(index, k):
@@ -63,34 +66,18 @@ def hammingDistance(p, q):
     there is some k-mer substring Pattern' of Text
     having d or fewer mismatches with Pattern.
     """
-    mismatches = 0
 
     if len(p) == len(q):
-        for p_val, q_val in zip(p, q):
-            if p_val != q_val:
-                mismatches += 1
-
-        return mismatches
+        return sum([1 if c1 != c2 else 0 for c1, c2 in zip(p, q)])
 
     if len(p) > len(q):
-        for p_val, q_val in zip(p[:len(q)], q):
-            if p_val != q_val:
-                mismatches += 1
-        return mismatches
+        return sum([1 if c1 != c2 else 0 for c1, c2 in zip(p[:len(q)], q)])
 
     if len(p) < len(q):
-        for p_val, q_val in zip(p, q[:len(p)]):
-            if p_val != q_val:
-                mismatches += 1
-        return mismatches
+        return sum([1 if c1 != c2 else 0 for c1, c2 in zip(p, q[:len(p)])])
 
     else:
         return 0
-
-
-
-
-
 
 
 
@@ -100,3 +87,7 @@ def quotient(n, m):
 
 def remainder(n, m):
     return n % m
+
+
+def make_spaced_string_from_comma_separated_array(array):
+    return " ".join([str(x) for x in array])
