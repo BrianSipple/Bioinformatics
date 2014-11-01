@@ -1,7 +1,7 @@
 import logging
 import unittest
-from origin_of_replication.pattern_finding import neighbors, find_approximate_pattern_positions, find_clumps, \
-    compute_gc_skew, pattern_count, most_frequent_kmers
+from origin_of_replication.pattern_finding import find_approximate_pattern_positions, find_clumps, \
+    compute_gc_skew, pattern_count, most_frequent_kmers, find_pattern_positions
 from utils import hammingDistance, make_spaced_string_from_comma_separated_array
 
 
@@ -46,7 +46,39 @@ class OriginOfReplicationTest(unittest.TestCase):
         DNA = "ACGTTGCATGTCGCATGATGCATGAGAGCT"
         K = 4
 
-        self.assertEqual(most_frequent_kmers(DNA, K), set(['CATG', 'GCAT']))
+        self.assertEqual(most_frequent_kmers(DNA, K, 0), set(['CATG', 'GCAT']))
+
+
+    def test_most_frequent_kmers_with_mismatches(self):
+
+        DNA = "ACGTTGCATGTCGCATGATGCATGAGAGCT"
+        K = 4
+        mutation_thresh = 1
+        kmers = most_frequent_kmers(DNA, K, mutation_thresh=mutation_thresh)
+        self.assertEqual(kmers, set(["GATG", "ATGC", "ATGT"]))
+
+
+        # DNA = "CAAAGCAGCTTTCTCTGGGAGCTGGGTTTTGGGTGGGAGCTTTCAACAACTCCTCAGCCTCTTTAGCTTTCTCTGGGCAATGGGCTCAGCCTCCTCCAAAGCTTTTTTCTCCAACAATTTAGCAGCCAAAGCTGGGTGGGCAATTTTGGGAGCCAACTCTGGGTTTTTTAGCTTTCTCCAACAATGGGCTCCTCAGCAGCAGCAGCTGGGAGCAGCTTTTGGGCAACTCAGCCAATTTAGCCTCCTCTGGGCAATGGGAGCTGGGTGGGCAACTCCAATGGGTTTAGCAGCTGGGCAACAACAAAGCTGGGTGGGCTCTGGGCTCTTTAGCAGCAGCCAATTTTGGGCTC"
+        # K = 8
+        # mutation_thresh = 2
+        # kmers = most_frequent_kmers(DNA, K, mutation_thresh)
+        # self.assertEqual(kmers, set(["TCAGCAAC"]))
+
+
+    def test_most_frequent_kmers_with_mismatches_and_reverse_complements(self):
+
+        DNA = "ACGTTGCATGTCGCATGATGCATGAGAGCT"
+        K = 4
+        mutation_thresh = 1
+        kmers = most_frequent_kmers(DNA, K, mutation_thresh, reverse=True)
+        self.assertEqual(kmers, set(["ATGT", "ACAT"]))
+
+        DNA = "ATTTGATCATATCATCATTTACATATATTTGTTGATCATTTGATCATTATTATTACTACATCATTACATTACTTGATTTTGATCATTTACATTTGTTGTACATCATATCATATCATTTGATATCATTATATCATTATATTTTGATATTATCTACATATTACATATATCATTACTACATCATTTTGATTATCATTTGTTGAT"
+        K = 10
+        mutation_thresh = 2
+        kmers = most_frequent_kmers(DNA, K, mutation_thresh=mutation_thresh, reverse=True)
+        print(kmers)
+
 
 
 
@@ -70,7 +102,7 @@ class OriginOfReplicationTest(unittest.TestCase):
         self.assertEqual(3, hd)
 
 
-    def test_neighbors(self):
+    def disabled_test_neighbors(self):
         pattern = "ACG"
         d = 1
 
@@ -96,32 +128,81 @@ class OriginOfReplicationTest(unittest.TestCase):
         # print(make_spaced_string_from_comma_separated_array(neighbors(pattern, d)))
 
 
-    def _test_find_apporoximate_pattern_matches(self):
+    def test_find_pattern_count_allowing_for_mutations(self):
+
+        DNA = "ATTCTGGC"
         pattern = "ATTCTGGA"
-        genome = "CGCCCGAATCCAGAACGCATTCCCATATTTCGGGACCACTGGCCTCCACGGTACGGACGTCAATCAAAT"
-        d = 3
+        m = 1
+        count = pattern_count(DNA, pattern, start=0, end=0, mutation_thresh=m)
+        self.assertEqual(1, count)
 
-        positions = find_approximate_pattern_positions(pattern, genome, d)
+        DNA = "AACAAGCTGATAAACATTTAAAGAG"
+        pattern = "AAAAA"
+        m = 2
+        count = pattern_count(pattern=pattern, DNA=DNA, mutation_thresh=m)
+        self.assertEqual(11, count)
 
+
+        DNA = "TTTAGAGCCTTCAGAGG"
+        pattern = "GAGG"
+        m = 2
+        count = pattern_count(DNA=DNA, pattern=pattern, mutation_thresh=m)
+        self.assertEqual(count, 4)
+
+
+        DNA = "TTACCGGGCATAGTACTCATGGCTGCCGTTTGAGCCCTCGCTTACTCTATCTTGTAATGATACCAGCACAATGCTTTCTGTCCAAGACCTGATCGGACTATTAGACCGCGACCAGTATTGTGATACCCGTTAGCGCGAAACGACGCACGAATGGGGAAATCCGCCGGATGAAACTGTAAAATTGGCGGGCGCACTCAATTTGTGGACGGACTTCTTGGTAGTTTCTCCTTAAGTCAGGGCTGGCATGAATGAATAGCGTCATGGGCCGATTTACATCAGAATCACAACTGAGTCAGACCAGGCAG"
+        pattern = "AATTTGT"
+        m = 2
+        count = pattern_count(DNA=DNA, pattern=pattern, mutation_thresh=m)
+        self.assertEqual(count, 6)
+
+
+
+    def test_find_positiions_of_patterns_allowing_for_mismatches(self):
+
+        pattern = "ATTCTGGA"
+        DNA = "CGCCCGAATCCAGAACGCATTCCCATATTTCGGGACCACTGGCCTCCACGGTACGGACGTCAATCAAAT"
+        mutation_thresh = 3
+
+        positions = find_pattern_positions(pattern, DNA, mutation_thresh)
         self.assertEqual(positions, [6, 7, 26, 27])
 
 
+
     def test_find_clumps(self):
-        k = 9
-        L = 500
-        t = 3
 
-        with open("../resources/ecoli.txt", 'r') as file:
-            ecoli = file.read()
+        # We'll warmup a small test first
+        DNA = "CGGACTCGACAGATGTGAAGAACGACAATGTGAAGACTCGACACGACAGAGTGAAGAGAAGAGGAAACATTGTAA"
+        k = 5
+        L = 50
+        t = 4
+        res = {'CGACA', 'GAAGA'}
+        self.assertEqual(find_clumps(DNA, k, L, t), res)
 
-        clumps = find_clumps(ecoli, k, L, t)
-
-        self.assertEquals(clumps, ("CGACA", "GAAGA"))
+        # For when we want to test on ecoli...
+        # k = 9
+        # L = 500
+        # t = 3
+        # print("Clump test...")
+        #
+        # with open("../resources/ecoli.txt", 'r') as file:
+        #     ecoli = file.read()
+        #
+        # clumps = find_clumps(ecoli, k, L, t)
+        #
+        # self.assertEquals(clumps, ("CGACA", "GAAGA"))
 
 
     def test_compute_gc_skew(self):
-        genome = "CGCCCGAATCCAGAACGCATTCCCATATTTCGGGACCACTGGCCTCCACGGTACGGACGTCAATCAAAT"
-        skew = compute_gc_skew(genome, chart=True)
+
+        genome = "GAGCCACCGCGATA"
+        true_skew = [0, 1, 1, 2, 1, 0, 0, -1, -2, -1, -2, -1, -1, -1, -1]
+        true_min_skew_positions = [8, 10]
+
+        test_skew, test_min_skew_positions = compute_gc_skew(genome, chart=False)
+
+        self.assertEqual(true_skew, test_skew)
+        self.assertEqual(true_min_skew_positions, test_min_skew_positions)
 
 
 if __name__ == "__main__":

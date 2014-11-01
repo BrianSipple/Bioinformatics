@@ -26,9 +26,19 @@ class FrequencyArrays(object):
         # Prepare frequency array
         self.freq = [0] * pow(4, K)
 
-        # Compute frequency array
+        #####################
+        # Precompute dictionaries of pattern_to_number and number_to_pattern
+        ####################
+        self.pattern_to_number = {
+            kmer: self._pattern_to_number(kmer) for kmer in self.kmers
+        }
+        self.number_to_pattern = {
+            i: self._number_to_pattern(i, K) for i in range(len(self.freq))
+        }
+
+        # compute frequency array
         for i in range(len(DNA) - K + 1):
-            index = self.pattern_to_number(''.join(DNA[i : i + K]))
+            index = self.pattern_to_number[''.join(DNA[i : i + K])]
             self.freq[index] += 1
 
 
@@ -39,7 +49,7 @@ class FrequencyArrays(object):
         return self.freq
 
 
-    def get_frequent(self):
+    def get_most_frequent(self):
         """
         Return a list with the most frequent k-mers
         :return:
@@ -51,6 +61,19 @@ class FrequencyArrays(object):
             if self.freq[i] == max_count:
                 most_freq.add(self.number_to_pattern[i, self.K])
         return most_freq
+
+
+    def set_frequency(self, kmer, f):
+        """
+        Set f as the frequency of the kmer in the frequency array.
+
+        This method allows the use of frequency array for sliding windows in
+         a DNA string
+        :param kmer: String - kmer for which to set frequency
+        :param f: Integer - frequency
+        """
+        assert f >= 0
+        self.freq[self.pattern_to_number[kmer]] = f
 
 
     def _pattern_to_number(self, kmer):
@@ -73,7 +96,7 @@ class FrequencyArrays(object):
         if len(kmer) == 1:
             return self._symbol_to_number(kmer)
         else:
-            return self._pattern_to_number(kmer[:-1]) + self._symbol_to_number(kmer[-1])
+            return 4 * self._pattern_to_number(kmer[:-1]) + self._symbol_to_number(kmer[-1])
 
 
     def _number_to_pattern(self, n, k):
@@ -95,8 +118,10 @@ class FrequencyArrays(object):
 
 
     def _symbol_to_number(self, symbol):
-
-        nucleotides = {'A': 1, 'C': 2, 'G': 3, 'T': 4}
+        """
+        Function transforming symbols A, C, G, and T into the respective integers 0, 1, 2, and 3
+        """
+        nucleotides = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
         return nucleotides[symbol]
 
 

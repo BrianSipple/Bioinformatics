@@ -33,6 +33,7 @@ that the i-th k-mer (in the lexicographic order) appears in Text
 """
 
 import numpy as np
+from data_structures import dictionaries
 
 try:
     import matplotlib.pyplot as plt
@@ -46,33 +47,33 @@ from utils import _NUCLEOTIDES
 import queue
 
 
-def pattern_count(text, pattern, start=0, end=0):
+def pattern_count(DNA, pattern, start=0, end=0, mutation_thresh=0):
     """
      Counts number of overlapping occurrences of `pattern` in `text`.
 
-    :param text: String - Text (DNA) to examine
+    :param DNA: String - Text (DNA) to examine
     :param pattern: String - Pattern (K-mer) to find in text
     :param start: Integer - Start in position <start> in the DNA
     :param end: Integer - End in position <end> in the DNA
     :returns: Integer - n number of occurrences of patter in text
     :raises: ValueError - If start < 0 or >= len(t)
     """
-    if start < 0 or start >= len(text):
+    if start < 0 or start >= len(DNA):
         raise ValueError("The starting position should be between 0 and the size " + \
                          "of the DNA")
 
     k = len(pattern)
     count = 0
-    end = len(text) - k + 1 if end == 0 else end
+    end = len(DNA) - k + 1 if end == 0 else end
 
     for i in range(0, end):
-        if text[i: i + k] == pattern:
+        if hamming_distance(DNA[i:i+k], pattern) <= mutation_thresh:
             count += 1
 
     return count
 
 
-def most_frequent_kmers(DNA, k):
+def most_frequent_kmers(DNA, k, mutation_thresh=0, reverse=False):
     """
     Returns a list of most frequent k-mers in DNA
 
@@ -81,50 +82,26 @@ def most_frequent_kmers(DNA, k):
 
     :param DNA: String - DNA
     :param k: Integer - Length of the K-mer
+    :param mutation_thresh: Allows for a certain number of mismatches
     :return: Set - Set of most frequent K-mers
     """
-    kmers = set()
-    most_frequent = queue.PriorityQueue()
+    freq_dict = dictionaries.FrequencyDict(DNA, k, mutation_thresh)
 
-    # ###
-    # Go through all the K-mers in the DNA string.
-    # If the K-mer is found, check whether it has been found previously.
-    # If not, record the find and count its occurances.
-    ####
-    for i in range(len(DNA) - k + 1):
+    kmers_found = set()
+    current_highest_freq = 0
 
-        kmer = ''.join(DNA[i: i + k])
+    for kmer, frequency in freq_dict.items():
 
-        if kmer in kmers:
-            continue
-        else:
-            kmers.add(kmer)
-            ####
-            # A priority queue will return the lowest-ordered item first,
-            # so we can negate the frequency count it if we want return to the highest-ordered
-            # (i.e. highest-frequency k-mer) first
-            ####
-            most_frequent.put((-pattern_count(DNA, kmer), kmer))
+        rev = reverse_complement(kmer, as_string=True)
+        if reverse and rev in freq_dict:
+            frequency += freq_dict[rev]
+        if frequency > current_highest_freq:
+            current_highest_freq = frequency
+            kmers_found = set([kmer])
+        elif frequency == current_highest_freq:
+            kmers_found.add(kmer)
 
-    # Extract ze most-frequent k-mers
-    result = set()
-    first = True
-    freq = -1
-
-    if not most_frequent.empty():
-
-        while not most_frequent.empty():
-            kmer = most_frequent.get()
-
-            # We'll need to grab items out of queue until the freq number changes
-            if not first and kmer[0] != freq:
-                break
-            else:
-                result.add(kmer[1])
-                freq = kmer[0]
-                first = False
-
-    return result
+    return kmers_found
 
 
 def reverse_complement(DNA, as_string=False):
@@ -140,17 +117,17 @@ def reverse_complement(DNA, as_string=False):
     return complements
 
 
-def find_pattern_positions(pattern, DNA):
+def find_pattern_positions(pattern, DNA, mutation_thresh=0):
     """
     Given a pattern and a larger genome, we want to be
     able to find all starting points of said pattern
     within the genome
     """
     positions = []
-    for i in range(len(DNA) - (len(pattern) + 1)):
+    for i in range(len(DNA) - len(pattern) + 1):
 
         current_pattern = DNA[i: (i + len(pattern))]
-        if pattern == current_pattern:
+        if hamming_distance(pattern, current_pattern) <= mutation_thresh:
             positions.append(i)
 
     return positions
@@ -171,24 +148,46 @@ def find_clumps(DNA, k, L, t):
     :return: List - K-mers forming (L, t)-Clumps in DNA
     """
     assert len(DNA) >= L
-
     clumps = set()
 
-    # Go through all regions of length L in the DNA
-    for i in range(0, len(DNA) - L + 1):
+    # Construct the frequency dict for the first region of size L in the DNA
+    freq_dict = dictionaries.FrequencyDict(DNA[:L], k)
 
-        # For each k-mer, find the number of occurrances in the L-length region
-        region = DNA[i: i + L]
-        kmers = set()
-        for j in range(i, i + L - 1 - k):
-            kmer = DNA[j: j + k]
-            if not kmer in kmers:
-                kmers.add(kmer)
-                _t = pattern_count(region, kmer)
-                if _t >= t:
-                    clumps.add(kmer)
+    # For each kmer in the first window, check if frequency >= t and correspondingly
+    # add the kmer to the clumps set
+    kmers = set()
+    for i in range(L - k + 1):
+        kmer = DNA[i: i + k]
+        if not kmer in kmers:
+            kmers.add(kmer)
+            _t = freq_dict[kmer]
+            if _t >= t:
+                clumps.add(kmer)
 
-        return clumps
+    # Decrease the frequency of the first kmer for the next iteration, as our
+    # sliding window will escape it
+    first_kmer = DNA[0:k]
+    freq_dict[first_kmer] -= 1
+
+    # Cool beans -- the initial freqs are set up and the window is in place.
+    # Now, we're ready to go through all other regions of length L in the DNA
+    for i in range(1, len(DNA) - L + 1):
+
+        # If not the first iteration, increase the frequency of the recently added
+        # last kmer. If that frequency >= t, add the kmer to the set of clumps
+        last_kmer = DNA[i+L-k : i+L]
+        freq_dict[last_kmer] += 1
+        if freq_dict[last_kmer] >= t:
+            clumps.add(last_kmer)
+
+        # Decrease the frequency of the first kmer in the region, as
+        # the sliding window will escape it
+        first_kmer = DNA[i:i+k]
+        freq_dict[first_kmer] -= 1
+
+    return clumps # Victory
+
+
 
 
 def find_highest_frequencies_with_mismatches_by_sorting(text, k, d):
@@ -232,55 +231,55 @@ def find_highest_frequencies_with_mismatches_by_sorting(text, k, d):
     return most_frequent_patterns
 
 
-def neighbors(pattern, d):
-    """
-    Generates the d-neighborhood for a PATTERN.
-
-    In other words: the set of all k-mers
-    whose Hamming distance from PATTERN does not exceed `d`
-
-    :return a list of k-mer combinations that comprise the d-neighborhood
-    """
-    if d == 0:
-        return pattern
-
-    if len(pattern) == 1:
-        return ['A', 'C', 'G', 'T']
-
-    neighborhood = []
-
-    # ##########
-    # We can use recursion to successively compute neighbors(suffix(pattern), d),
-    # where suffix(pattern) = pattern[1:]
-    #
-    # The reason being: if we have neighbors(suffix(pattern, d)), then we know
-    # that the Hamming Distance between `pattern` and `suffix(pattern)` is either equal
-    # to d or less than d.
-    #
-    # In the first case, we can add `pattern[0]` to the beginning of
-    # `suffix(pattern)` in order to obtain a k-mer belonging to
-    # Neighbors(Pattern, d). In the second case, we can add any symbol
-    # to the beginning of `suffix(pattern)` and obtain a k-mer belonging
-    # to Neighbors(Pattern, d).
-    # ##########
-
-    suffix_pattern = pattern[1:]
-    suffix_neighbors = neighbors(suffix_pattern, d)
-    print(suffix_pattern)
-    print(suffix_neighbors)
-
-    for i in range(len(suffix_neighbors)):
-
-        neighboring_pattern_text = suffix_neighbors[i]
-
-        if hammingDistance(suffix_pattern, neighboring_pattern_text) < d:
-            for n in _NUCLEOTIDES:
-                neighborhood.append(n + neighboring_pattern_text)
-
-        else:
-            neighborhood.append(pattern[0] + neighboring_pattern_text)
-
-    return neighborhood
+# def neighbors(pattern, d):
+#     """
+#     Generates the d-neighborhood for a PATTERN.
+#
+#     In other words: the set of all k-mers
+#     whose Hamming distance from PATTERN does not exceed `d`
+#
+#     :return a list of k-mer combinations that comprise the d-neighborhood
+#     """
+#     if d == 0:
+#         return pattern
+#
+#     if len(pattern) == 1:
+#         return ['A', 'C', 'G', 'T']
+#
+#     neighborhood = []
+#
+#     # ##########
+#     # We can use recursion to successively compute neighbors(suffix(pattern), d),
+#     # where suffix(pattern) = pattern[1:]
+#     #
+#     # The reason being: if we have neighbors(suffix(pattern, d)), then we know
+#     # that the Hamming Distance between `pattern` and `suffix(pattern)` is either equal
+#     # to d or less than d.
+#     #
+#     # In the first case, we can add `pattern[0]` to the beginning of
+#     # `suffix(pattern)` in order to obtain a k-mer belonging to
+#     # Neighbors(Pattern, d). In the second case, we can add any symbol
+#     # to the beginning of `suffix(pattern)` and obtain a k-mer belonging
+#     # to Neighbors(Pattern, d).
+#     # ##########
+#
+#     suffix_pattern = pattern[1:]
+#     suffix_neighbors = neighbors(suffix_pattern, d)
+#     print(suffix_pattern)
+#     print(suffix_neighbors)
+#
+#     for i in range(len(suffix_neighbors)):
+#
+#         neighboring_pattern_text = suffix_neighbors[i]
+#
+#         if hammingDistance(suffix_pattern, neighboring_pattern_text) < d:
+#             for n in _NUCLEOTIDES:
+#                 neighborhood.append(n + neighboring_pattern_text)
+#
+#         else:
+#             neighborhood.append(pattern[0] + neighboring_pattern_text)
+#
+#     return neighborhood
 
 
 def find_approximate_pattern_positions(pattern, genome, d):
@@ -337,10 +336,10 @@ def compute_gc_skew(DNA, chart=False):
 
     :return: Tuple - With skew array and list of positions where the skew minimizes.
     """
-    res = [0]
+    running_skew = [0]
     G_C = 0
-    _min = 0
-    indexes = []
+    min = 0
+    min_indexes = []
 
     for i in range(len(DNA)):
 
@@ -350,24 +349,26 @@ def compute_gc_skew(DNA, chart=False):
         elif DNA[i] == "C":
             G_C -= 1
 
-        # Compute the min. NOTE: We have to sum one to the indexes because we already
-        # start with an extra element in the res (a 0)
-        if G_C < _min:
-            indexes = [i + 1]
-        elif G_C == min:
-            indexes.append(i + 1)
-        res.append(G_C)
+        running_skew.append(G_C)
+
+    # Compute the min. NOTE: We have to sum one to the indexes because we already
+    # start with an extra element in the res (a 0)
+    min_skew = np.min(running_skew)
+
+    for i in range(len(running_skew)):
+        if running_skew[i] == min_skew:
+            min_indexes.append(i)
 
     if chart:
         if sys.modules.get('matplotlib', None):
-            plt.plot(res)
+            plt.plot(running_skew)
             plt.ylabel('G - C diff')
             plt.title('Skew diagram')
             plt.savefig('skew.png')
         else:
             print("No matplotlib module found -- no skew diagram for you :-(")
 
-    return (res, indexes)
+    return (running_skew, min_indexes)
 
 
 """
@@ -398,6 +399,16 @@ def find_min_gc_skew_locations(DNA):
             min_skew_locations.append(i)
 
     return min_skew_locations
+
+
+
+def hamming_distance(s1, s2):
+    """
+    Compute the hamming distance between s1 and s2
+    """
+    assert(len(s1) == len(s2))
+    return np.sum([1 if c1 != c2 else 0 for c1, c2 in zip(s1, s2)])
+
 
 
 if __name__ == "__main__":
