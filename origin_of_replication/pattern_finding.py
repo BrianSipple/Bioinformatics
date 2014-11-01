@@ -34,6 +34,7 @@ that the i-th k-mer (in the lexicographic order) appears in Text
 
 import numpy as np
 from data_structures import dictionaries
+import utils
 
 try:
     import matplotlib.pyplot as plt
@@ -41,10 +42,6 @@ except ImportError:
     pass
 
 import sys
-from utils import numberToPattern, patternToNumber
-from utils import hammingDistance
-from utils import _NUCLEOTIDES
-import queue
 
 
 def pattern_count(DNA, pattern, start=0, end=0, mutation_thresh=0):
@@ -188,124 +185,99 @@ def find_clumps(DNA, k, L, t):
     return clumps # Victory
 
 
-
-
-def find_highest_frequencies_with_mismatches_by_sorting(text, k, d):
-    """
-    By knowing that we can have "close" patterns be valid for our search,
-    we can find said "close" patterns using the "neighbors" functions, and
-    only apply "find_approximate_pattern_matches()" to those as opposed to all k-mers
-    """
-    num_possibilities = 4 ** k
-    most_frequent_patterns = []
-    neighborhoods = []
-    index = []
-    counts = []
-
-    close_patterns = [
-                         0] * num_possibilities  # These will be set to 1 whenever k-mer Pattern = NumberToPattern(i, k) is close to some k-mer in Text
-    frequency_array = [0] * num_possibilities
-
-    for i in range(len(text) - k + 1):
-        current_pattern = text[i: i + k]
-        neighborhoods.append(
-            neighbors(current_pattern, d))  # Forms an array of arrays holding the neighborhoods of each k-mer
-
-    for neighborhood in neighborhoods:
-        index.append(patternToNumber(neighborhood))
-        counts.append(1)
-
-    sortedIndex = np.sort(index)
-
-    for i in range(len(neighborhoods)):
-        if sortedIndex[i] == sortedIndex[i + 1]:  # repeating values at the index positions indicate a repeating pattern
-            counts[i + 1] = counts[i] + 1
-
-    max_count = np.max(counts)
-
-    for i in range(len(neighborhoods)):
-        if counts[i] == max_count:
-            pattern = numberToPattern(sortedIndex[i], k)
-            most_frequent_patterns.append(pattern)
-
-    return most_frequent_patterns
-
-
-# def neighbors(pattern, d):
+#
+#
+# def find_highest_frequencies_with_mismatches_by_sorting(text, k, d):
 #     """
-#     Generates the d-neighborhood for a PATTERN.
-#
-#     In other words: the set of all k-mers
-#     whose Hamming distance from PATTERN does not exceed `d`
-#
-#     :return a list of k-mer combinations that comprise the d-neighborhood
+#     By knowing that we can have "close" patterns be valid for our search,
+#     we can find said "close" patterns using the "neighbors" functions, and
+#     only apply "find_approximate_pattern_matches()" to those as opposed to all k-mers
 #     """
-#     if d == 0:
-#         return pattern
+#     num_possibilities = 4 ** k
+#     most_frequent_patterns = []
+#     neighborhoods = []
+#     index = []
+#     counts = []
 #
-#     if len(pattern) == 1:
-#         return ['A', 'C', 'G', 'T']
+#     close_patterns = [
+#                          0] * num_possibilities  # These will be set to 1 whenever k-mer Pattern = NumberToPattern(i, k) is close to some k-mer in Text
+#     frequency_array = [0] * num_possibilities
 #
-#     neighborhood = []
+#     for i in range(len(text) - k + 1):
+#         current_pattern = text[i: i + k]
+#         neighborhoods.append(
+#             neighbors(current_pattern, d))  # Forms an array of arrays holding the neighborhoods of each k-mer
 #
-#     # ##########
-#     # We can use recursion to successively compute neighbors(suffix(pattern), d),
-#     # where suffix(pattern) = pattern[1:]
-#     #
-#     # The reason being: if we have neighbors(suffix(pattern, d)), then we know
-#     # that the Hamming Distance between `pattern` and `suffix(pattern)` is either equal
-#     # to d or less than d.
-#     #
-#     # In the first case, we can add `pattern[0]` to the beginning of
-#     # `suffix(pattern)` in order to obtain a k-mer belonging to
-#     # Neighbors(Pattern, d). In the second case, we can add any symbol
-#     # to the beginning of `suffix(pattern)` and obtain a k-mer belonging
-#     # to Neighbors(Pattern, d).
-#     # ##########
+#     for neighborhood in neighborhoods:
+#         index.append(patternToNumber(neighborhood))
+#         counts.append(1)
 #
-#     suffix_pattern = pattern[1:]
-#     suffix_neighbors = neighbors(suffix_pattern, d)
-#     print(suffix_pattern)
-#     print(suffix_neighbors)
+#     sortedIndex = np.sort(index)
 #
-#     for i in range(len(suffix_neighbors)):
+#     for i in range(len(neighborhoods)):
+#         if sortedIndex[i] == sortedIndex[i + 1]:  # repeating values at the index positions indicate a repeating pattern
+#             counts[i + 1] = counts[i] + 1
 #
-#         neighboring_pattern_text = suffix_neighbors[i]
+#     max_count = np.max(counts)
 #
-#         if hammingDistance(suffix_pattern, neighboring_pattern_text) < d:
-#             for n in _NUCLEOTIDES:
-#                 neighborhood.append(n + neighboring_pattern_text)
+#     for i in range(len(neighborhoods)):
+#         if counts[i] == max_count:
+#             pattern = numberToPattern(sortedIndex[i], k)
+#             most_frequent_patterns.append(pattern)
 #
-#         else:
-#             neighborhood.append(pattern[0] + neighboring_pattern_text)
-#
-#     return neighborhood
+#     return most_frequent_patterns
 
 
-def find_approximate_pattern_positions(pattern, genome, d):
+def neighbors(pattern, d):
     """
-    Applying the Hamming Distance Theorem, we'll often want to find
-    patterns in a genome having d or fewer mistmatches with a given `pattern`.
+    Generates the d-neighborhood for a PATTERN.
 
-    Approximate Pattern Matching Problem:
-        - Find all approximate occurrences of a pattern in a string.
+    In other words: the set of all k-mers
+    whose Hamming distance from PATTERN does not exceed `d`
 
-     Input:
-         - Strings Pattern and Text along with an integer d.
-
-     Output:
-         - All starting positions where Pattern appears as a substring
-           of Text with at most d mismatches.
+    :return a list of k-mer combinations that comprise the d-neighborhood
     """
-    positions = []
-    pattern_length = len(pattern)
+    if d == 0:
+        return pattern
 
-    found_patterns = find_highest_frequencies_with_mismatches_by_sorting(genome, pattern_length, d)
+    if len(pattern) == 1:
+        return ['A', 'C', 'G', 'T']
 
-    for pat in found_patterns:
-        positions.append(patternToNumber(pat))
+    neighborhood = []
 
-    return positions
+    # ##########
+    # We can use recursion to successively compute neighbors(suffix(pattern), d),
+    # where suffix(pattern) = pattern[1:]
+    #
+    # The reason being: if we have neighbors(suffix(pattern, d)), then we know
+    # that the Hamming Distance between `pattern` and `suffix(pattern)` is either equal
+    # to d or less than d.
+    #
+    # In the first case, we can add `pattern[0]` to the beginning of
+    # `suffix(pattern)` in order to obtain a k-mer belonging to
+    # Neighbors(Pattern, d). In the second case, we can add any symbol
+    # to the beginning of `suffix(pattern)` and obtain a k-mer belonging
+    # to Neighbors(Pattern, d).
+    # ##########
+
+    suffix_pattern = pattern[1:]
+    suffix_neighbors = neighbors(suffix_pattern, d)
+
+    for i in range(len(suffix_neighbors)):
+
+        neighboring_pattern_text = suffix_neighbors[i]
+
+        if hamming_distance(suffix_pattern, neighboring_pattern_text) < d:
+            for n in utils._NUCLEOTIDES:
+                neighborhood.append(n + neighboring_pattern_text)
+
+        else:
+            neighborhood.append(pattern[0] + neighboring_pattern_text)
+
+    return neighborhood
+
+
+
 
 
 """

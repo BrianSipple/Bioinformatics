@@ -8,13 +8,14 @@ class FrequencyArrays(object):
     """
     Construct a frequency array for a given array string
     """
-    def init(self, DNA, K):
+    def __init__(self, DNA, K):
         """
         Constructs a frequency array for the given DNA and K
 
         :param DNA: String - DNA string
         :param K: Integer - Length of the K-mer
         """
+        super(FrequencyArrays, self).__init__()
         assert K >= 1
         assert len(DNA) >= K
 
@@ -133,5 +134,22 @@ class FrequencyArrays(object):
         return nucleotides[n]
 
 
+class Genetic_Code(object):
+
+    def __init__(self):
+        super(Genetic_Code, self).__init__()
+
+        self.codons = [
+
+        ]
 
 
+    def is_stop_codon(self):
+        """
+        Does this codon have a peptide output, or is it a stop codon?
+        :return:
+        """
+        pass
+
+
+    #TODO: Determine if data structure is the best approach here
