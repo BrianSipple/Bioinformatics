@@ -34,7 +34,7 @@ that the i-th k-mer (in the lexicographic order) appears in Text
 
 import numpy as np
 from data_structures import dictionaries
-import utils
+from utils import reverse_complement, _NUCLEOTIDES
 
 try:
     import matplotlib.pyplot as plt
@@ -99,19 +99,6 @@ def most_frequent_kmers(DNA, k, mutation_thresh=0, reverse=False):
             kmers_found.add(kmer)
 
     return kmers_found
-
-
-def reverse_complement(DNA, as_string=False):
-    """
-    Returns the reverse complement of a strand of DNA
-    """
-    comp_dict = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
-    complements = [comp_dict[nuc] for nuc in DNA[::-1]]
-
-    if as_string:
-        complements = "".join(complements)
-
-    return complements
 
 
 def find_pattern_positions(pattern, DNA, mutation_thresh=0):
@@ -268,7 +255,7 @@ def neighbors(pattern, d):
         neighboring_pattern_text = suffix_neighbors[i]
 
         if hamming_distance(suffix_pattern, neighboring_pattern_text) < d:
-            for n in utils._NUCLEOTIDES:
+            for n in _NUCLEOTIDES:
                 neighborhood.append(n + neighboring_pattern_text)
 
         else:

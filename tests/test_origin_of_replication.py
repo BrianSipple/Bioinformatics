@@ -115,7 +115,6 @@ class OriginOfReplicationTest(unittest.TestCase):
         pattern = "TGT"
         m = 1
         count = pattern_count(DNA, pattern, start=0, end=0, mutation_thresh=m)
-        print(count)
         self.assertEqual(8, count)
 
         DNA = "AACAAGCTGATAAACATTTAAAGAG"
