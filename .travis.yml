@@ -1,0 +1,16 @@
+language: python
+
+python:
+  - "3.4"
+
+
+install:
+  - python3 setup.py install
+
+
+script:
+  - cd tests && nosetests -v -s
+
+
+notifications:
+  email: false
