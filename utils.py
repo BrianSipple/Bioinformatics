@@ -159,6 +159,9 @@ def rna_to_dna(RNA):
     """
     return "".join([nuc if nuc != 'U' else 'T' for nuc in RNA])
 
+def peptide_symbol_to_rna(peptide_symbol):
+    return _PEPTIDE_SYMBOL_ORIGINS.get(peptide_symbol.upper())
+
 
 if __name__ == "__main__":
     pass

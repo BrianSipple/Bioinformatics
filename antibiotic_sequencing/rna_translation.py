@@ -1,4 +1,6 @@
-from utils import _GENETIC_CODE, _PEPTIDE_SYMBOL_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna
+from data_structures.dictionaries import FrequencyDict
+from utils import _GENETIC_CODE, _PEPTIDE_SYMBOL_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna, \
+    peptide_symbol_to_rna
 import numpy as np
 
 
@@ -53,7 +55,27 @@ def compute_possible_rna_origins(peptide_list, return_list=False):
     return count
 
 
-def compute_possible_dna_origins(DNA, final_peptide):
+def recursive_find_rna_encoders(encoders, amino_seq):
+    """
+    Recursively generate all RNA sequences that encode a given amino acid sequence
+    """
+    if not encoders:
+        [encoders.add(t) for t in peptide_symbol_to_rna(amino_seq[0])]
+        encoders = recursive_find_rna_encoders(encoders, amino_seq[1:])
+
+    elif amino_seq:
+        aux = set()
+        for t in peptide_symbol_to_rna(amino_seq[0]):
+            for e in encoders:
+                e += t
+                aux.add(e)
+        encoders = recursive_find_rna_encoders(aux, amino_seq[1:])
+
+    return encoders
+
+
+
+def compute_possible_dna_origins(DNA, final_peptides):
     """
     Given a string of DNA and a string of peptides, find the
     subsets of DNA withing the String that could have encoded the peptide
@@ -68,30 +90,28 @@ def compute_possible_dna_origins(DNA, final_peptide):
 
     :return: origins: Array - A list of possible DNA origins for the peptides
     """
-    possible_origins = []
-    reverse_comp = reverse_complement(DNA, as_string=True, unreversed_order=True)
-    rna = dna_to_rna(DNA)
-    rna_complement = dna_to_rna(reverse_comp)
-    final_peptide_length = len(final_peptide)
+    encoders = recursive_find_rna_encoders(set(), final_peptides)
+    freq_dict = FrequencyDict(DNA, len(final_peptides) * 3)
 
-    for i in range(0, len(rna) - (3 * final_peptide_length) + 1, 3):
+    res = []
 
-        corresponding_codons = rna[ i : i + (3 * final_peptide_length) ]
-        codon_peptides = translate_to_peptides(corresponding_codons)
+    for codon in encoders:
 
-        if codon_peptides == final_peptide:
-            # We have a match!
-            possible_origins.append(rna_to_dna(corresponding_codons))
+        enc_dna = rna_to_dna(codon)
+        enc_rev = reverse_complement(enc_dna, as_string=True)
 
-    for i in range(0, len(rna_complement) - (3 * final_peptide_length) + 1, 3):
+        freq = freq_dict.get(enc_dna, 0)
+        res.extend([enc_dna] * freq)
 
-        corresponding_codons = rna_complement[ i : i + (3 * final_peptide_length)]
-        codon_peptides = translate_to_peptides(corresponding_codons)
+        freq = freq_dict.get(enc_rev, 0)
+        res.extend([enc_rev] * freq)
 
-        if codon_peptides == reversed(final_peptide):
-            possible_origins.append(rna_to_dna(corresponding_codons))
+    return res
 
-    return possible_origins
+
+
+
+
 
 
 

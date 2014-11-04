@@ -24,7 +24,7 @@ class RNATranslationTest(unittest.TestCase):
 
 
 
-    def test_compute_possible_dna_origins(self):
+    def test_compute_possible_rna_origins(self):
 
         peptides = ['V', 'K', 'L', 'F', 'W', 'P', 'F', 'N', 'Q', 'Y']
         count = compute_possible_rna_origins(peptides)
