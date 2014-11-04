@@ -7,7 +7,7 @@ _NUCLEOTIDES = ['A', 'C', 'G', 'T']
 # Each codon (exepct for 3 stop codons) is converted into
 # its corresponding amino acid peptide
 #
-_GENETIC_CODE = {
+_CODON_PEPTIDE_SYMBOL = {
     "AAA": "K",
     "AAC": "N",
     "AAG": "K",
@@ -76,7 +76,7 @@ _GENETIC_CODE = {
 
 
 # We can map each peptide to the RNA codons that convert to it
-_PEPTIDE_SYMBOL_ORIGINS = {
+_PEPTIDE_SYMBOL_RNA_ORIGINS = {
     "V": ["GUA", "GUC", "GUG", "GUU"],
     "": ["UGA", "UAG", "UAA"],
     "Y": ["UAC", "UAU"],
@@ -100,7 +100,7 @@ _PEPTIDE_SYMBOL_ORIGINS = {
     "H": ["CAU", "CAC"]
 }
 
-_ABBREVIATED_PEPTIDE_ORIGINS = {
+_ABBREVIATED_PEPTIDE_RNA_ORIGINS = {
     "Val": ["GUA", "GUC", "GUG", "GUU"],
     "": ["UGA", "UAG", "UAA"],
     "Tyr": ["UAC", "UAU"],
@@ -160,7 +160,7 @@ def rna_to_dna(RNA):
     return "".join([nuc if nuc != 'U' else 'T' for nuc in RNA])
 
 def peptide_symbol_to_rna(peptide_symbol):
-    return _PEPTIDE_SYMBOL_ORIGINS.get(peptide_symbol.upper())
+    return _PEPTIDE_SYMBOL_RNA_ORIGINS.get(peptide_symbol.upper())
 
 
 if __name__ == "__main__":

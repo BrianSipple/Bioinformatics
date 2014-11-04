@@ -27,8 +27,8 @@ class RNATranslationTest(unittest.TestCase):
     def test_compute_possible_rna_origins(self):
 
         peptides = ['V', 'K', 'L', 'F', 'W', 'P', 'F', 'N', 'Q', 'Y']
-        count = compute_possible_rna_origins(peptides)
-        self.assertEqual(count, 27)
+        possible_origins = compute_possible_rna_origins(peptides)
+        self.assertEqual(len(possible_origins), 27)
 
 
 
@@ -36,9 +36,25 @@ class RNATranslationTest(unittest.TestCase):
 
         DNA = "ATGGCCATGGCCCCCAGAACTGAGATCAATAGTACCCGTATTAACGGGTGA"
         peptides = "MA"
-
         possible_origins = compute_possible_dna_origins(DNA, peptides)
-        print(possible_origins)
+        self.assertEqual(['ATGGCC', 'ATGGCC', 'GGCCAT'], possible_origins)
+
+
+        bacillus_brevis = ""
+        # bacillus_brevis test
+        with open('../resources/bacillus_brevis.txt', 'r') as f:
+            while f.readline():
+                bacillus_brevis += f.readline().rstrip()
+
+        Tyrocidine_B1 = "VKLFWPFNQY"
+        print(bacillus_brevis)
+
+        # None exist!
+        possible_origins = compute_possible_dna_origins(bacillus_brevis, Tyrocidine_B1)
+        self.assertEqual(0, len(possible_origins))
+
+
+
 
 
 

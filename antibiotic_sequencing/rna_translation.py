@@ -1,5 +1,5 @@
 from data_structures.dictionaries import FrequencyDict
-from utils import _GENETIC_CODE, _PEPTIDE_SYMBOL_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna, \
+from utils import _CODON_PEPTIDE_SYMBOL, _PEPTIDE_SYMBOL_RNA_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna, \
     peptide_symbol_to_rna
 import numpy as np
 
@@ -21,13 +21,13 @@ def translate_to_peptides(RNA):
 
     for i in range(0, len(RNA) - 3 + 1, 3):
         codon = RNA[i: i + 3]
-        if codon in _GENETIC_CODE:
-            peptides += _GENETIC_CODE[codon]
+        if codon in _CODON_PEPTIDE_SYMBOL:
+            peptides += _CODON_PEPTIDE_SYMBOL[codon]
 
     return peptides
 
 
-def compute_possible_rna_origins(peptide_list, return_list=False):
+def compute_possible_rna_origins(peptide_list):
     """
     Compute the possible DNA origins for a list of amino acid peptides
 
@@ -39,20 +39,14 @@ def compute_possible_rna_origins(peptide_list, return_list=False):
     :return: count - The number of possible DNA origins
     :return: possible_origins: Array - the list of possible origins... if desired
     """
-    count = 0
     possible_origins = []
 
     for peptide in peptide_list:
-        if peptide in _PEPTIDE_SYMBOL_ORIGINS:
-            count += len(_PEPTIDE_SYMBOL_ORIGINS[peptide])
-            if return_list:
-                for origin in _PEPTIDE_SYMBOL_ORIGINS[peptide]:
-                    possible_origins.append(origin)
+        if peptide in _PEPTIDE_SYMBOL_RNA_ORIGINS:
+            for origin in _PEPTIDE_SYMBOL_RNA_ORIGINS[peptide]:
+                possible_origins.append(origin)
 
-    if return_list:
-        return count, possible_origins
-
-    return count
+    return possible_origins
 
 
 def recursive_find_rna_encoders(encoders, amino_seq):
