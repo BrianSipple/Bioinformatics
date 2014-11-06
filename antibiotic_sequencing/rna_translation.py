@@ -1,6 +1,7 @@
+from itertools import cycle, dropwhile, islice
 from data_structures.dictionaries import FrequencyDict
 from utils import _CODON_PEPTIDE_SYMBOL, _PEPTIDE_SYMBOL_RNA_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna, \
-    peptide_symbol_to_rna
+    peptide_symbol_to_rna, _PEPTIDE_INTEGER_MASS
 import numpy as np
 
 
@@ -101,6 +102,81 @@ def compute_possible_dna_origins(DNA, final_peptides):
         res.extend([enc_rev] * freq)
 
     return res
+
+
+def compute_cyclopeptides(peptide):
+    """
+    Models a mass spectrometer that breaks copies of a cyclic peptide
+    at every possible two bonds, so that the resulting experimental specturm
+    contains the masses of all possible linear fragments of the peptide, called "subpeptides"
+
+    Example: the cyclic peptide NQEL has 12 subpeptides: N, Q, E, L, NQ, QE, EL, LN, NQE, QEL, ELN, and LNQ
+
+    :return: the list of subpeptides
+    """
+    res = []
+
+    amino_acids_to_grab = 1
+    cycles_remaining = len(peptide) - 1
+
+    while cycles_remaining > 0:
+
+        cycled = cycle([amino_acid for amino_acid in peptide])
+
+        for i in range(len(peptide)):
+
+            skipped = dropwhile(lambda x: x != peptide[i], cycled)
+
+            # Grab the amino slice from the iterable of amino acids, starting from the first not
+            # skipped and extending to the length of the slice we need to take
+            amino_slice = islice(skipped, amino_acids_to_grab)
+
+            res.append("".join(amino_slice))
+        amino_acids_to_grab += 1
+        cycles_remaining -= 1
+
+    return res
+
+
+def compute_mass_spectrum(cyclopeptide, sorted=True):
+    """
+    Given a cyclopeptides, we can compute its THEORETICAL SPECTRUM by
+    assigning a total integer mass to each of its subpeptides
+
+    NOTE: We also start with 0, and end with the mass of the full
+    peptide itself.
+
+    :param cyclopeptide: String  - the peptide we aim to smash into subpeptides
+    and compute the mass for
+
+    :return: list - integers representing the mass for each cyclopeptide, sorted ascending by default
+    """
+    masses = [0]
+
+    subpeptides = compute_cyclopeptides(cyclopeptide)
+    print(subpeptides)
+
+    for subpep in subpeptides:
+
+        mass = 0
+        for amino_acid in subpep:
+            mass += _PEPTIDE_INTEGER_MASS[amino_acid]
+
+        masses.append(mass)
+
+    # One final mass computation for the entire cyclopeptide
+    mass = 0
+    for amino_acid in cyclopeptide:
+        mass += _PEPTIDE_INTEGER_MASS[amino_acid]
+    masses.append(mass)
+
+    if sorted:
+        masses = list(np.sort(masses))
+
+    return masses
+
+
+
 
 
 

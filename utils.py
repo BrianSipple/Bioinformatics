@@ -125,6 +125,32 @@ _ABBREVIATED_PEPTIDE_RNA_ORIGINS = {
 }
 
 
+# For mass spectrometry, the exact measurement is Daltons,
+# but having Integer mass conversions get us super-close
+_PEPTIDE_INTEGER_MASS = {
+    "G": 57,
+    "A": 71,
+    "S": 87,
+    "P": 97,
+    "V": 99,
+    "T": 101,
+    "C": 103,
+    "I": 113,
+    "L": 113,
+    "N": 114,
+    "D": 115,
+    "K": 128,
+    "Q": 128,
+    "E": 129,
+    "M": 131,
+    "H": 137,
+    "F": 147,
+    "R": 156,
+    "Y": 163,
+    "W": 186
+}
+
+
 def make_spaced_string_from_comma_separated_array(array):
     return " ".join([str(x) for x in array])
 
@@ -161,6 +187,8 @@ def rna_to_dna(RNA):
 
 def peptide_symbol_to_rna(peptide_symbol):
     return _PEPTIDE_SYMBOL_RNA_ORIGINS.get(peptide_symbol.upper())
+
+
 
 
 if __name__ == "__main__":
