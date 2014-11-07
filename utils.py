@@ -150,6 +150,31 @@ _PEPTIDE_INTEGER_MASS = {
     "W": 186
 }
 
+_AMINO_ACID_SYMBOLS = [
+    "G",
+    "A",
+    "S",
+    "P",
+    "V",
+    "T",
+    "C",
+    "I",
+    "L",
+    "N",
+    "D",
+    "K",
+    "Q",
+    "E",
+    "M",
+    "H",
+    "F",
+    "R",
+    "Y",
+    "W"
+]
+
+
+
 
 def make_spaced_string_from_comma_separated_array(array):
     return " ".join([str(x) for x in array])

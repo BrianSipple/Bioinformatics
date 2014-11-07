@@ -1,7 +1,7 @@
 from itertools import cycle, dropwhile, islice
 from data_structures.dictionaries import FrequencyDict
 from utils import _CODON_PEPTIDE_SYMBOL, _PEPTIDE_SYMBOL_RNA_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna, \
-    peptide_symbol_to_rna, _PEPTIDE_INTEGER_MASS
+    peptide_symbol_to_rna, _PEPTIDE_INTEGER_MASS, _AMINO_ACID_SYMBOLS
 import numpy as np
 
 
@@ -138,43 +138,49 @@ def compute_cyclopeptides(peptide):
     return res
 
 
-def compute_mass_spectrum(cyclopeptide, sorted=True):
+def compute_mass_spectrum(peptide, cyclic=False):
     """
-    Given a cyclopeptides, we can compute its THEORETICAL SPECTRUM by
-    assigning a total integer mass to each of its subpeptides
+    Given a peptide, we can compute its THEORETICAL SPECTRUM by
+    assigning a total integer mass to each of its subpeptides.
+
+    If Peptide represents a cyclic peptide instead, then the
+    masses in its theoretical spectrum can be divided into
+    those found by LinearSpectrum and those corresponding to
+    subpeptides wrapping around the end of Peptide
 
     NOTE: We also start with 0, and end with the mass of the full
     peptide itself.
 
-    :param cyclopeptide: String  - the peptide we aim to smash into subpeptides
+    :param peptide: String  - the peptide we aim to smash into subpeptides
     and compute the mass for
 
-    :return: list - integers representing the mass for each cyclopeptide, sorted ascending by default
+    :return: list - integers representing the mass for each cyclopeptide,
+    computed in linear form by default
     """
-    masses = [0]
+    prefix_masses = [0]
 
-    subpeptides = compute_cyclopeptides(cyclopeptide)
-    print(subpeptides)
+    # We'll start by calculating the mass prefixes
+    for index, amino_acid in enumerate(peptide):
+        prefix_masses.append(_PEPTIDE_INTEGER_MASS[amino_acid] + prefix_masses[index])
 
-    for subpep in subpeptides:
+    peptide_mass = prefix_masses[-1]
 
-        mass = 0
-        for amino_acid in subpep:
-            mass += _PEPTIDE_INTEGER_MASS[amino_acid]
+    # Now, we'll calculate the linear spectrum using the prefix masses
+    spectrum = [0]
 
-        masses.append(mass)
+    for i in range(len(peptide)):
+        for j in range(i + 1, len(peptide) + 1):
+            spectrum.append(prefix_masses[j] - prefix_masses[i])
 
-    # One final mass computation for the entire cyclopeptide
-    mass = 0
-    for amino_acid in cyclopeptide:
-        mass += _PEPTIDE_INTEGER_MASS[amino_acid]
-    masses.append(mass)
+            #####
+            # Cyclic scenario...
+            # Each such subpeptide has mass equal to the difference between
+            # Mass(Peptide) and a subpeptide mass identified by LinearSpectrum
+            ####
+            if cyclic and (i > 0 and j < len(peptide)):
+                spectrum.append(peptide_mass - (prefix_masses[j] - prefix_masses[i]))
 
-    if sorted:
-        masses = list(np.sort(masses))
-
-    return masses
-
+    return sorted(spectrum)
 
 
 
