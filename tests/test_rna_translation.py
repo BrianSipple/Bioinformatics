@@ -1,6 +1,7 @@
 import unittest
 from antibiotic_sequencing.rna_translation import translate_to_peptides, compute_possible_rna_origins, \
-    compute_possible_dna_origins, compute_cyclopeptides, compute_mass_spectrum
+    compute_possible_dna_origins, compute_cyclopeptides, compute_mass_spectrum, count_peptides_with_mass, \
+    compute_peptide_total_mass
 
 
 class RNATranslationTest(unittest.TestCase):
@@ -70,12 +71,25 @@ class RNATranslationTest(unittest.TestCase):
         self.assertListEqual(expected_mass_spectrum, result)
 
 
-        peptide = "MMQIRTHGLKEKLADSLSPCDVSEIPSCHIWAVCS"
-        result = compute_mass_spectrum(peptide)
-        print(" ".join([str(num) for num in result]))
+        # peptide = "DPHMRVGIHPEHIEQ"
+        # result = compute_mass_spectrum(peptide, cyclic=True)
+        # print(" ".join([str(num) for num in result]))
 
 
+    # def test_count_peptides_with_mass(self):
+    #
+    #     total_mass = 100000
+    #     possible_peptides = count_peptides_with_mass(total_mass, recursive=True)
+    #
+    #     print (possible_peptides)
 
+
+    def test_peptide_masss(self):
+
+        peptide = "NQEL"
+        total_mass = compute_peptide_total_mass(peptide)
+
+        self.assertEqual(484, total_mass)
 
 
 

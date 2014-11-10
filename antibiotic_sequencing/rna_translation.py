@@ -104,6 +104,19 @@ def compute_possible_dna_origins(DNA, final_peptides):
     return res
 
 
+def count_subpeptides(n):
+    """
+    Return the number of sub-peptides of a cyclic peptide of length n.
+
+    Being cyclic, a peptide can always form n groups of length 1, 2, 3, ..., n-1. I.e
+    the peptide NQEL can form: N, Q, E, L, NQ, QE, EL, LN, NQE, QEL, ELN, LNQ == 12
+
+    Thus we have our answer... n*n-1
+    """
+    return n*(n-1)
+
+
+
 def compute_cyclopeptides(peptide):
     """
     Models a mass spectrometer that breaks copies of a cyclic peptide
@@ -183,6 +196,73 @@ def compute_mass_spectrum(peptide, cyclic=False):
     return sorted(spectrum)
 
 
+
+def find_peptide_from_spectrum(spectrum):
+    """
+    Finds the amino acid peptide that a given spectrum
+    must have originated from
+
+    :param spectrum: list - integers corresponding to the masses of a peptide's subpeptides
+
+    :return: the amino acid peptide that originated the spectrum
+    """
+    pass
+
+
+
+
+def _peptides_with_mass_recursive(mass_table, mass):
+    """
+    Recursive computation of peptides with a given mass
+    """
+    if (len(mass_table)) == 0 and mass > 0:
+        return 0
+
+    elif mass < 0:
+        return 0
+
+    elif mass == 0:
+        return 1
+
+    else:
+
+        return _peptides_with_mass_recursive(mass_table, mass - mass_table[0]) + \
+               _peptides_with_mass_recursive(mass_table[1:], mass)
+
+
+
+
+def count_peptides_with_mass(mass, recursive=False):
+    """
+    Given a mass, we compute which peptides produced it
+    :param mass - integer - the total integer mass of a peptide
+
+    :return: count - integer - the number of linear peptides having a the mass
+    """
+
+    if recursive:
+        mass_table = sorted([m for m in list(np.unique(list(_PEPTIDE_INTEGER_MASS.values())))])
+
+        print(mass_table)
+
+        return _peptides_with_mass_recursive(mass_table, mass)
+
+    else:
+        raise NotImplementedError("No non-recursive method implemented")
+
+
+
+def compute_peptide_total_mass(peptide):
+    """
+    Computes the total mass of a peptide (the sum of all single subpeptide masses)
+    """
+    total_mass = 0
+
+    for p in peptide:
+        if p in _PEPTIDE_INTEGER_MASS:
+            total_mass += _PEPTIDE_INTEGER_MASS[p]
+
+    return total_mass
 
 
 

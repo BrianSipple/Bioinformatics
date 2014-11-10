@@ -214,6 +214,14 @@ def peptide_symbol_to_rna(peptide_symbol):
     return _PEPTIDE_SYMBOL_RNA_ORIGINS.get(peptide_symbol.upper())
 
 
+def factorial(n):
+    """
+    Classic recursive factorial helper
+    """
+    if n == 0 or n == 1:
+        return n
+    return n * factorial(n-1)
+
 
 
 if __name__ == "__main__":
