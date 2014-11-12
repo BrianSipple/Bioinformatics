@@ -1,7 +1,7 @@
 import unittest
 from antibiotic_sequencing.rna_translation import translate_to_peptides, compute_possible_rna_origins, \
     compute_possible_dna_origins, compute_cyclopeptides, compute_mass_spectrum, count_peptides_with_mass, \
-    compute_peptide_total_mass
+    compute_peptide_total_mass, count_linear_subpeptides_in_peptide, count_cyclopeptides_in_peptide
 
 
 class RNATranslationTest(unittest.TestCase):
@@ -60,7 +60,7 @@ class RNATranslationTest(unittest.TestCase):
         Tyrocidine_B1 = "VKLFWPFNQY"
         cyclopeptides = compute_cyclopeptides(Tyrocidine_B1)
 
-        #print(cyclopeptides)
+        print(cyclopeptides)
 
 
     def test_compute_mass_spectrum(self):
@@ -93,6 +93,18 @@ class RNATranslationTest(unittest.TestCase):
 
 
 
+    def test_count_linear_subpeptides_in_peptide(self):
+
+        peptide_length = 5
+        self.assertEqual(120, count_linear_subpeptides_in_peptide(peptide_length))
+
+
+    def test_count_cyclopeptides_in_peptide(self):
+
+        peptide_length = 5
+        expected = peptide_length * (peptide_length-1)
+
+        self.assertEqual(expected, count_cyclopeptides_in_peptide(peptide_length))
 
 
 

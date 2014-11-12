@@ -127,7 +127,7 @@ _ABBREVIATED_PEPTIDE_RNA_ORIGINS = {
 
 # For mass spectrometry, the exact measurement is Daltons,
 # but having Integer mass conversions get us super-close
-_PEPTIDE_INTEGER_MASS = {
+_PEPTIDE_TO_MASS = {
     "G": 57,
     "A": 71,
     "S": 87,
@@ -149,6 +149,35 @@ _PEPTIDE_INTEGER_MASS = {
     "Y": 163,
     "W": 186
 }
+
+## In some cases, we're only looking for unique masses,
+## so we can treat the pairs ("I", "L") and ("K", "Q")
+## as interchangeable keys to the same value
+_PEPTIDE_TO_UNIQUE_MASS = {
+    "G": 57,
+    "A": 71,
+    "S": 87,
+    "P": 97,
+    "V": 99,
+    "T": 101,
+    "C": 103,
+    "I": 113,
+    #"L": 113,
+    "N": 114,
+    "D": 115,
+    "K": 128,
+    #"Q": 128,
+    "E": 129,
+    "M": 131,
+    "H": 137,
+    "F": 147,
+    "R": 156,
+    "Y": 163,
+    "W": 186
+}
+
+
+
 
 _AMINO_ACID_SYMBOLS = [
     "G",
@@ -217,10 +246,19 @@ def peptide_symbol_to_rna(peptide_symbol):
 def factorial(n):
     """
     Classic recursive factorial helper
+
+    Why? Why not?
     """
     if n == 0 or n == 1:
         return n
     return n * factorial(n-1)
+
+
+def nth_triangle(n):
+    """
+    Like a factorial, but with addition!  (http://en.wikipedia.org/wiki/Triangular_number)
+    """
+    return (n + 1) / 2
 
 
 
