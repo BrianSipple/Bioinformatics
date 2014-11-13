@@ -1,8 +1,12 @@
 from itertools import cycle, dropwhile, islice
-from data_structures.dictionaries import FrequencyDict
-from utils import _CODON_PEPTIDE_SYMBOL, _PEPTIDE_SYMBOL_RNA_ORIGINS, reverse_complement, dna_to_rna, rna_to_dna, \
-    peptide_symbol_to_rna, _PEPTIDE_TO_MASS, _AMINO_ACID_SYMBOLS, _PEPTIDE_TO_UNIQUE_MASS, factorial
+from utils import _CODON_PEPTIDE_SYMBOL,_PEPTIDE_SYMBOL_RNA_ORIGINS, _PEPTIDE_TO_MASS, peptide_symbol_to_rna, rna_to_dna, \
+    reverse_complement, nth_triangle, _PEPTIDE_TO_UNIQUE_MASS
+
 import numpy as np
+
+
+
+from data_structures.dictionaries import FrequencyDict
 
 
 def translate_to_peptides(RNA):
@@ -104,24 +108,26 @@ def compute_possible_dna_origins(DNA, final_peptides):
     return res
 
 
-def count_cyclopeptides_in_peptide(pep_length):
+def count_subpeptides_in_cyclopeptides(pep_length):
     """
     Return the number of sub-peptides of a cyclic peptide of length n.
 
     Being cyclic, a peptide can always form n groups of length 1, 2, 3, ..., n-1. I.e
     the peptide NQEL can form: N, Q, E, L, NQ, QE, EL, LN, NQE, QEL, ELN, LNQ == 12
 
-    Thus we have our answer... n * n-1
+    Essentially... n * n-1... plus 2 for factoring in the first empty string and last whole number
     """
-    return pep_length * (pep_length-1)
+    return pep_length * (pep_length-1) + 2
 
 
-def count_linear_subpeptides_in_peptide(pep_length):
+def count_subpeptides_in_linear_peptide(pep_length):
     """
-    Counting linear subpeptides in a peptide amounts to a straightforward
-    factorial algorithm
+    The number of linear subpeptides in a peptide is the
+    nth_triangle number of the length  (http://en.wikipedia.org/wiki/Triangular_number)
+
+    ...plus 2 for factoring in the first empty string and last whole number
     """
-    return factorial(pep_length)
+    return nth_triangle(pep_length) + 2
 
 
 
@@ -205,21 +211,9 @@ def compute_mass_spectrum(peptide, cyclic=False):
 
 
 
-def find_peptide_from_spectrum(spectrum):
-    """
-    Finds the amino acid peptide that a given spectrum
-    must have originated from
-
-    :param spectrum: list - integers corresponding to the masses of a peptide's subpeptides
-
-    :return: the amino acid peptide that originated the spectrum
-    """
-    pass
 
 
-
-
-def _peptides_with_mass_recursive(mass_table, mass):
+def _peptides_in_mass_spectrum_recursive(mass_table, mass):
     """
     Recursive computation of peptides with a given mass
     """
@@ -234,9 +228,8 @@ def _peptides_with_mass_recursive(mass_table, mass):
 
     else:
 
-        return _peptides_with_mass_recursive(mass_table, mass - mass_table[0]) + \
-               _peptides_with_mass_recursive(mass_table[1:], mass)
-
+        return _peptides_in_mass_spectrum_recursive(mass_table, mass - mass_table[0]) + \
+               _peptides_in_mass_spectrum_recursive(mass_table[1:], mass)
 
 
 
@@ -253,7 +246,7 @@ def count_peptides_with_mass(mass, recursive=False):
 
         print(mass_table)
 
-        return _peptides_with_mass_recursive(mass_table, mass)
+        return _peptides_in_mass_spectrum_recursive(mass_table, mass)
 
     else:
         raise NotImplementedError("No non-recursive method implemented")
@@ -274,7 +267,7 @@ def compute_peptide_total_mass(peptide):
 
 
 
-def find_cyclopeptide_from_experimental_spectrum(exp_spectrum):
+def find_cyclopeptide_in_mass_spectrum(exp_spectrum):
     """
     Iteratively build a list of candidate peptides for a total mass, where the final
     candidates will be those whose theoretical spectra are “consistent” with the experimental
@@ -290,46 +283,52 @@ def find_cyclopeptide_from_experimental_spectrum(exp_spectrum):
     :return: the cyclopeptides
     """
 
-    candidates = {"": 0}  # keep a dict of candidate peptides and their mass
-    parent_mass = exp_spectrum[-1]  # treat the largest mass of the spectrum as the parent mass
+    candidates = [""] * (len(_PEPTIDE_TO_UNIQUE_MASS) + 1)  # keep a dict of candidate peptides and their mass
+    parent_mass = int(exp_spectrum[-1])  # treat the largest mass of the spectrum as the parent mass
+    continue_search = True
 
-    while True:
+    while continue_search:
 
-        for candidate in candidates:
+        # Build the list of candidates by making each a k+1-mer
+        i = 0
+        for subpeptide in _PEPTIDE_TO_UNIQUE_MASS:
+            i += 1
+            candidates[i] = (candidates[i] + subpeptide)
 
-            current_candidate_mass = candidates[candidate]
 
-            for subpeptide in _PEPTIDE_TO_UNIQUE_MASS:
+        for linear_candidate in candidates:
 
-                new_linear_candidate = candidate + subpeptide  # string concat
-                new_linear_candidate_mass = current_candidate_mass + _PEPTIDE_TO_MASS[subpeptide]
+            linear_candidate_mass = compute_peptide_total_mass(linear_candidate)
 
-                if new_linear_candidate_mass == parent_mass:  # potential winner
+            theor_spec = compute_cyclopeptides(linear_candidate)
 
-                    cyclopeptides = compute_cyclopeptides(new_linear_candidate)
+            print(linear_candidate_mass)
 
-                    if is_consistent_with_theoretical_spectrum(cyclopeptides):
-                        return new_linear_candidate
+            if linear_candidate_mass == parent_mass:  # potential winner
+                if is_theoretical_spectrum_consistent(theor_spec, exp_spectrum):
+                    return theor_spec
 
-                #TODO: Consider three lines below
-                # elif new_linear_candidate_mass > parent_mass:
-                #     # We've crossed the limit... something went wrong
-                #     return None
+            elif linear_candidate_mass > parent_mass:
+                # We've crossed the limit... something went wrong
+                return None
 
-                # If we're here, we still need to append any "consistent" new candidates to prep
-                # for the next iteration
-                elif is_consistent_with_theoretical_spectrum(new_linear_candidate):
 
-                    candidates[new_linear_candidate] = new_linear_candidate_mass # TODO: Do we need values in the dict at all with this algorithm?
+            # If we're here, we still need to remove any "inconsistent" new candidates to prep
+            # for the next iteration
+            elif not is_theoretical_spectrum_consistent(theor_spec, exp_spectrum):
+                candidates.remove(linear_candidate)
 
-                else:
-                    break
+
+        if len(candidates) > 1 and candidates[0] != "":
+            continue_search = True
+        else:
+            continue_search = False
     return None
 
 
 
 
-def is_consistent_with_theoretical_spectrum(experimental_spectrum):
+def is_theoretical_spectrum_consistent(theor_spec, exp_spec):
     """
     checks whether the experimental spectrum of a peptide is "consistent" with
     its theoretical spectrum.
@@ -338,6 +337,13 @@ def is_consistent_with_theoretical_spectrum(experimental_spectrum):
 
     :return: consistent - boolean
     """
+
+    for subpeptide in theor_spec:
+        if subpeptide not in exp_spec:
+            return False
+
+    return True
+
 
 
 

@@ -258,35 +258,13 @@ def nth_triangle(n):
     """
     Like a factorial, but with addition!  (http://en.wikipedia.org/wiki/Triangular_number)
     """
-    return (n + 1) / 2
+    return (n * (n + 1)) / 2
 
 
 
 if __name__ == "__main__":
     pass
 
-
-    ##################################################################################
-    # Quick helper for generating the _PEPTIDE_ORIGINS dict
-    ##################################################################################
-    # peptides = {}
-    #
-    # for codon, peptide in _GENETIC_CODE.items():
-    #     if peptide not in peptides:
-    #         peptides[peptide] = [codon]
-    #     else:
-    #         peptides[peptide].append(codon)
-    #
-    # print(peptides)
-    #
-    #
-    # with open('./translations', 'w') as outfile:
-    #
-    #     for pep, mapping in peptides.items():
-    #         outfile.write('"{}": [{}]\n'.format(
-    #             pep,
-    #             ", ".join(['"' + codon + '"' for codon in mapping])
-    #         ))
 
 
 
