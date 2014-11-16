@@ -100,7 +100,7 @@ class RNATranslationTest(unittest.TestCase):
         self.assertEqual(17, count_subpeptides_in_linear_peptide(peptide_length))
 
         peptide_length = 23250
-        print(count_subpeptides_in_linear_peptide(peptide_length))
+        #print(count_subpeptides_in_linear_peptide(peptide_length))
 
 
     def test_count_subpeptides_in_cyclopeptide(self):
@@ -114,6 +114,7 @@ class RNATranslationTest(unittest.TestCase):
 
         experimental_spectrum = "0 113 128 186 241 299 314 427"
         experimental_spectrum = experimental_spectrum.split(" ")  # convert to array
+        experimental_spectrum = [int(mass) for mass in experimental_spectrum] # convert to array of ints
 
         cyclopeptide = find_cyclopeptide_in_mass_spectrum(experimental_spectrum)
 

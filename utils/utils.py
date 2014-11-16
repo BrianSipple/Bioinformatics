@@ -176,7 +176,26 @@ _PEPTIDE_TO_UNIQUE_MASS = {
     "W": 186
 }
 
-
+_UNIQUE_MASS_TO_PEPTIDE = {
+    57: "G",
+    71: "A",
+    87: "S",
+    97: "P",
+    99: "V",
+    101: "T",
+    103: "C",
+    113: "I",
+    114: "N",
+    115: "D",
+    128: "K",
+    129: "E",
+    131: "M",
+    137: "H",
+    147: "F",
+    156: "R",
+    163: "Y",
+    186: "W"
+}
 
 
 _AMINO_ACID_SYMBOLS = [
@@ -202,6 +221,12 @@ _AMINO_ACID_SYMBOLS = [
     "W"
 ]
 
+
+def spectrum_to_peptides(spectrum):
+    """
+    Converts a mass spectrum to its peptide representation
+    """
+    return [_UNIQUE_MASS_TO_PEPTIDE[mass] for mass in spectrum]
 
 
 

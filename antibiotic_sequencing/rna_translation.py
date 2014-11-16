@@ -1,6 +1,6 @@
 from itertools import cycle, dropwhile, islice
 from utils import _CODON_PEPTIDE_SYMBOL,_PEPTIDE_SYMBOL_RNA_ORIGINS, _PEPTIDE_TO_MASS, peptide_symbol_to_rna, rna_to_dna, \
-    reverse_complement, nth_triangle, _PEPTIDE_TO_UNIQUE_MASS
+    reverse_complement, nth_triangle, _PEPTIDE_TO_UNIQUE_MASS, spectrum_to_peptides
 
 import numpy as np
 
@@ -141,6 +141,9 @@ def compute_cyclopeptides(peptide):
 
     :return: the list of subpeptides
     """
+    if len(peptide) == 1:
+        return peptide
+
     res = []
 
     amino_acids_to_grab = 1
@@ -282,63 +285,73 @@ def find_cyclopeptide_in_mass_spectrum(exp_spectrum):
     :param mass: the total mass of all codons in a peptide
     :return: the cyclopeptides
     """
-
-    candidates = [""] * (len(_PEPTIDE_TO_UNIQUE_MASS) + 1)  # keep a dict of candidate peptides and their mass
+    results = []
+    candidate_spectrums = [[]]
     parent_mass = int(exp_spectrum[-1])  # treat the largest mass of the spectrum as the parent mass
-    continue_search = True
 
-    while continue_search:
+    while len(candidate_spectrums) > 0:
 
-        # Build the list of candidates by making each a k+1-mer
-        i = 0
-        for subpeptide in _PEPTIDE_TO_UNIQUE_MASS:
-            i += 1
-            candidates[i] = (candidates[i] + subpeptide)
+        candidate_spectrums = expand(candidate_spectrums)
 
+        # Make a copy so we can delete from the original
+        spectrums = candidate_spectrums[:]
 
-        for linear_candidate in candidates:
+        print("Candidate spectrums: {}".format(candidate_spectrums))
 
-            linear_candidate_mass = compute_peptide_total_mass(linear_candidate)
+        for linear_spec in spectrums:
 
-            theor_spec = compute_cyclopeptides(linear_candidate)
+            linear_candidate_mass = sum(linear_spec)
 
-            print(linear_candidate_mass)
+            print("Linear candidate mass: {}".format(linear_candidate_mass))
 
             if linear_candidate_mass == parent_mass:  # potential winner
-                if is_theoretical_spectrum_consistent(theor_spec, exp_spectrum):
-                    return theor_spec
+                print("Mass of {} is equal to parent mass! Checking for theoretical cyclospectrum match".format(linear_spec))
 
-            elif linear_candidate_mass > parent_mass:
-                # We've crossed the limit... something went wrong
-                return None
+                candidate_peptides = spectrum_to_peptides(linear_spec)
+                theor_spec = compute_mass_spectrum(candidate_peptides, cyclic=True)
+
+                if theor_spec == exp_spectrum:
+                    results.append(linear_spec)
+                else:
+                    # Remove -- it's not consistent
+                    spectrums.remove(linear_spec)
+
+            # elif linear_candidate_mass > parent_mass:
+            #     # We've crossed the limit... something went wrong
+            #     return None
 
 
             # If we're here, we still need to remove any "inconsistent" new candidates to prep
             # for the next iteration
-            elif not is_theoretical_spectrum_consistent(theor_spec, exp_spectrum):
-                candidates.remove(linear_candidate)
+            elif not is_linear_spectrum_consistent(linear_spec, exp_spectrum):
+                spectrums.remove(linear_spec)
+
+    return results
 
 
-        if len(candidates) > 1 and candidates[0] != "":
-            continue_search = True
-        else:
-            continue_search = False
-    return None
+def expand(spectrums):
+
+    expanded = []
+
+    for spectrum in spectrums:
+        for peptide in _PEPTIDE_TO_UNIQUE_MASS:
+            new_spectrum = spectrum + [_PEPTIDE_TO_UNIQUE_MASS[peptide]]
+            expanded.append(new_spectrum)
+
+    return expanded
 
 
-
-
-def is_theoretical_spectrum_consistent(theor_spec, exp_spec):
+def is_linear_spectrum_consistent(linear_spec, exp_spec):
     """
-    checks whether the experimental spectrum of a peptide is "consistent" with
-    its theoretical spectrum.
+    checks whether the linear spectrum of a candidate peptide is "consistent" with
+    the cyclic experimental spectrum we're working with.
 
     We define consistency as
 
     :return: consistent - boolean
     """
 
-    for subpeptide in theor_spec:
+    for subpeptide in linear_spec:
         if subpeptide not in exp_spec:
             return False
 
