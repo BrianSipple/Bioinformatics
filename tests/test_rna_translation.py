@@ -3,6 +3,7 @@ from antibiotic_sequencing.rna_translation import translate_to_peptides, compute
     compute_possible_dna_origins, compute_cyclopeptides, compute_mass_spectrum, count_peptides_with_mass, \
     compute_peptide_total_mass, count_subpeptides_in_linear_peptide, count_subpeptides_in_cyclopeptides, \
     find_cyclopeptide_in_mass_spectrum
+from utils import spectrum_to_peptides
 
 
 class RNATranslationTest(unittest.TestCase):
@@ -85,7 +86,7 @@ class RNATranslationTest(unittest.TestCase):
     #     print (possible_peptides)
 
 
-    def test_peptide_masss(self):
+    def test_peptide_mass(self):
 
         peptide = "NQEL"
         total_mass = compute_peptide_total_mass(peptide)
@@ -112,14 +113,29 @@ class RNATranslationTest(unittest.TestCase):
 
     def test_find_cyclopeptide_in_experimental_spectrum(self):
 
-        experimental_spectrum = "0 113 128 186 241 299 314 427"
-        experimental_spectrum = experimental_spectrum.split(" ")  # convert to array
-        experimental_spectrum = [int(mass) for mass in experimental_spectrum] # convert to array of ints
+        experimental_spectrum = "0 71 101 113 131 184 202 214 232 285 303 315 345 416"
+        experimental_spectrum = list(map(int, experimental_spectrum.split(" ")))  # convert to array of ints
 
-        cyclopeptide = find_cyclopeptide_in_mass_spectrum(experimental_spectrum)
+        results = find_cyclopeptide_in_mass_spectrum(experimental_spectrum)
 
-        print(cyclopeptide)
+        output = ""
 
+        for res in results:
+            output += ("-".join(map(str, res))) + " "
+
+        print(output)
+
+        for result in results:
+            print(spectrum_to_peptides(result))
+
+
+    def pending_test_convolution_cyclopeptide_sequencing(self):
+
+        m = 20
+        n = 60
+        exp_spec = [57, 57, 71, 99, 129, 137, 170, 186, 194, 208, 228, 265, 285, 299, 307, 323, 356, 364, 394, 422, 493]
+
+        print(convolution_cyclopeptide_sequencing(m, n, exp_spec))
 
 
 if __name__ == "__main__":
