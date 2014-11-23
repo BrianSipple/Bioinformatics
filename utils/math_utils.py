@@ -1,3 +1,7 @@
+"""
+Getting down to the raw arithmetic
+"""
+
 def expected_number_of_kmers_over_multiple_sequences(k, L, N):
     """
 

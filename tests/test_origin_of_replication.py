@@ -213,6 +213,7 @@ class OriginOfReplicationTest(unittest.TestCase):
 
         n = neighbors(pattern, d)
         self.assertEqual(len(n), 175)
+        print(n)
 
 
 
