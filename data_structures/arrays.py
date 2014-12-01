@@ -133,23 +133,3 @@ class FrequencyArrays(object):
         nucleotides = ['A', 'C', 'G', 'T']
         return nucleotides[n]
 
-
-class Genetic_Code(object):
-
-    def __init__(self):
-        super(Genetic_Code, self).__init__()
-
-        self.codons = [
-
-        ]
-
-
-    def is_stop_codon(self):
-        """
-        Does this codon have a peptide output, or is it a stop codon?
-        :return:
-        """
-        pass
-
-
-    #TODO: Determine if data structure is the best approach here

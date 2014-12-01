@@ -11,7 +11,9 @@ Concretely, we're now computing over DNA arrays where each item in the
 array will represent a `slice` of the genome at a point that's relatively
 distant from each other slice.
 """
-from origin_of_replication.pattern_finding import neighbors, pattern_count
+from math import log
+from data_structures.arrays import FrequencyArrays
+from origin_of_replication.pattern_finding import neighbors, pattern_count, hamming_distance
 
 
 def find_motifs(k, d, dna_seqs):
@@ -65,8 +67,118 @@ def find_motifs(k, d, dna_seqs):
                 if n not in motifs:
                     motifs.append(n)
 
-
     return motifs
+
+
+
+def motif_matrix_score(motifs):
+    """
+    When we've constructed a t x k matrix of k-mer motifs
+    in t sequences, we can compute the score as the number of
+    unpopular letters (nucleotides not matching the most popular nucleotide)
+    in each column
+
+    :param motifs: list of lists - k x t k-mer sequences in a motif matrix
+    :return: number of unpopular nucleotides in the matrix
+    """
+    pass
+
+
+
+
+def profile_matrix(motifs):
+    """
+    Computes frequencies for each nucleotide at each column in `motif`
+
+    :param motifs: list of lists - k x t k-mer sequences in a motif matrix
+    :return: 4-k matrix of frequencies for A, C, G, and T in each column
+    """
+    pass
+
+
+
+def consensus_string(motifs):
+    """
+    Assembles a string of nucleotides based upon the highest-frequency
+    nucleotide for each column of `motifs`
+
+    :param motifs: list of lists - k x t k-mer sequences in a motif matrix
+    :return: String of nucleotides representing an ideal candidate regulatory motif
+    """
+
+def matrix_entropy(matrix):
+    """
+
+    :param matrix:
+    :return:
+    """
+    column_entropies = []
+
+    profile = profile_matrix(matrix)
+
+    freq_lists = list(profile.values())
+
+    for i in range(len(freq_lists)):
+
+        column_entropy = 0
+
+        for l in freq_lists:
+            column_entropy += (-1 * (l[i] * log(l[i], base=2)))
+
+        column_entropies.append(column_entropy)
+
+    return column_entropies
+
+
+
+def median_string(k, dna_strings):
+    """
+    Finds a k-mer Pattern that minimizes d(Pattern, Dna) among all k-mers Pattern
+    :param k:
+    :param dna_strings:
+    :return:
+    """
+    current_distance = len(dna_strings)**len(dna_strings)  # Set a higher-than-possible max distance
+    median = None
+
+    for i in range(4**k - 1):
+        pattern = FrequencyArrays._number_to_pattern(i, k)
+
+        m_distance = matrix_distance(pattern, dna_strings)
+
+        if current_distance > m_distance:
+            current_distance = m_distance
+            median = pattern
+
+    return median
+
+
+def matrix_distance(pattern, dna_strings):
+    """
+    Computes the total of the minimum hamming distances of a pattern and dna_string
+    over all strings in `dna_strings`
+    """
+
+    k = len(pattern)
+    distance = 0
+
+    for dna_string in dna_strings:
+
+        found_hamming_distance = len(dna_string) ** len(dna_strings)  # Initialize a maximum
+
+        for i in range(len(dna_string) - k):
+
+            dna_kmer = dna_string[i: i + k]
+            hd = hamming_distance(dna_kmer, pattern)
+
+            if found_hamming_distance > hd:
+                found_hamming_distance = hd
+
+        distance += found_hamming_distance
+
+    return distance
+
+
 
 
 
