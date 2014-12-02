@@ -60,3 +60,4 @@ target/
 # Misc
 .DS_Store
 third-party/
+generated_output/
