@@ -376,10 +376,10 @@ if __name__ == "__main__":
     # print ("Count: {}".format(pattern_count(genome, pattern)))
 
 
-    # with open('resources/oric_vibrio_cholerae.txt', 'rb') as file:
+    # with open('input_data/oric_vibrio_cholerae.txt', 'rb') as file:
     # oric_vibrio_cholerae = file.read()
     #
-    # with open('resources/oric_thermotoga_petrophila.txt', 'rb') as file:
+    # with open('input_data/oric_thermotoga_petrophila.txt', 'rb') as file:
     # oric_thermotoga_petrophila = file.read()
     #
     #     # k = 8

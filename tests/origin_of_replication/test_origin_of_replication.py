@@ -172,7 +172,7 @@ class OriginOfReplicationTest(unittest.TestCase):
         # t = 3
         # print("Clump test...")
         #
-        # with open("../resources/ecoli.txt", 'r') as file:
+        # with open("../input_data/ecoli.txt", 'r') as file:
         #     ecoli = file.read()
         #
         # clumps = find_clumps(ecoli, k, L, t)

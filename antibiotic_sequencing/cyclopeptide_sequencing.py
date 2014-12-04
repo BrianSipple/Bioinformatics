@@ -4,7 +4,7 @@ from utils import nth_triangle, _PEPTIDE_TO_MASS, _PEPTIDE_TO_UNIQUE_MASS, spect
 
 
 def main():
-    with open("resources/convolution_cyclopeptide_sequencing.txt", 'r') as fi:
+    with open("input_data/convolution_cyclopeptide_sequencing.txt", 'r') as fi:
         m = int(fi.readline())
         n = int(fi.readline())
         spectrum = [int(i) for i in fi.readline().strip().split(' ')]

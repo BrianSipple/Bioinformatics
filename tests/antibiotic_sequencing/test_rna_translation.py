@@ -45,7 +45,7 @@ class RNATranslationTest(unittest.TestCase):
 
         bacillus_brevis = ""
         # bacillus_brevis test
-        with open('../resources/bacillus_brevis.txt', 'r') as f:
+        with open('../input_data/bacillus_brevis.txt', 'r') as f:
             while f.readline():
                 bacillus_brevis += f.readline().rstrip()
 
