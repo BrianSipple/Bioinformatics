@@ -54,22 +54,46 @@ def sequence_reconstruction(kmers, string_result=True):
 
 
 
-def dna_path(dna, return_list=True):
+def overlap_list(kmers, return_list=True):
+    """
+    Constructs an overlap graph (In the form of an adjacency list)
+    for a list of k-mers.
 
-    # Lambda functions to check for overlapping suffixes and prefixes and print them
+    I.E: If we treat each k-mer in a set as a node, we can map edges to
+    each of the other k-mers where the k-1-mer prefix of kmer and k-1k-mer
+    suffix of kmer' match.
+    """
+
+    # Lambda functions to check for overlapping prefixes and suffixes and print them
     check_overlap = lambda pair: pair[0][1:] == pair[1][:-1]
     print_overlap = lambda pair: ' -> '.join(pair)
 
     # Get all pairs, filter out non-overlapping pairs, then print remaining overlapping pairs
-    pairs = ([dna1, dna2] for i, dna1 in enumerate(dna) for j, dna2 in enumerate(dna) if i != j)
+    pairs = ([kmer1, kmer] for i, kmer1 in enumerate(kmers) for j, kmer2 in enumerate(kmers) if i != j)
     overlaps = map(print_overlap, filter(check_overlap, pairs))
 
     # Print and save the answers.
     print('\n'.join(overlaps))
-    with open('../output_data/genome_seq__reconstruction.txt', 'w') as output_data:
+    with open('../output_data/genome_seq__overlap_graph.txt', 'w') as output_data:
         output_data.write('\n'.join(overlaps))
 
-    # By default, return list to any callers
+    # By default, we'll return the list to any callers
     if return_list:
         return [overlap for overlap in overlaps]
 
+
+def universal_string(k):
+    """
+    Contructs a k-univeral binary string_result
+    """
+
+    # Generate all binary k-mers
+    # perform sequence_reconstruction
+
+
+def generate_binary_kmers(char_choices, k):
+    """
+    Generates all possible binary k-mers for a
+    list of characters and some number, k
+    """
+    res = ["".join(["0"] * k)]  # initialize an array with an all-zero k-mer as the first item
