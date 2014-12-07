@@ -1,3 +1,4 @@
+from itertools import product
 import numpy as np
 
 
@@ -31,8 +32,6 @@ def sequence_reconstruction(kmers, string_result=True):
     :param kmers: a list of k-mers representing a DNA string's k-mer composition
     :return: the DNA string that would have generated the composition
     """
-
-
     k = len(kmers[0])
     current_string_suffix = kmers[0][0]  # start with the first character of the first k-mer
 
@@ -69,31 +68,29 @@ def overlap_list(kmers, return_list=True):
     print_overlap = lambda pair: ' -> '.join(pair)
 
     # Get all pairs, filter out non-overlapping pairs, then print remaining overlapping pairs
-    pairs = ([kmer1, kmer] for i, kmer1 in enumerate(kmers) for j, kmer2 in enumerate(kmers) if i != j)
+    pairs = ([kmer1, kmer2] for i, kmer1 in enumerate(kmers) for j, kmer2 in enumerate(kmers) if i != j)
     overlaps = map(print_overlap, filter(check_overlap, pairs))
 
-    # Print and save the answers.
-    print('\n'.join(overlaps))
-    with open('../output_data/genome_seq__overlap_graph.txt', 'w') as output_data:
-        output_data.write('\n'.join(overlaps))
-
-    # By default, we'll return the list to any callers
+    # By if return_list is true, we'll return the list (in lexicographic order) to the caller instead of printing it
     if return_list:
-        return [overlap for overlap in overlaps]
+        return list(np.sort([overlap for overlap in overlaps]))
+    else:
+        with open('../output_data/genome_seq__overlap_graph.txt', 'w') as output_data:
+            output_data.write("\n".join(overlaps))
 
 
-def universal_string(k):
+def universal_string(k, char_choices):
     """
     Contructs a k-univeral binary string_result
     """
 
-    # Generate all binary k-mers
-    # perform sequence_reconstruction
+    possibilities = ["".join(item) for item in product(char_choices, repeat=k)]
+    return sequence_reconstruction(possibilities)
 
 
-def generate_binary_kmers(char_choices, k):
+def generate_binary_kmers(k):
     """
     Generates all possible binary k-mers for a
     list of characters and some number, k
     """
-    res = ["".join(["0"] * k)]  # initialize an array with an all-zero k-mer as the first item
+    return universal_string(k, "01")
