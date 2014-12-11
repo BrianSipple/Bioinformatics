@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from itertools import product
 import numpy as np
 
@@ -83,14 +84,39 @@ def universal_string(k, char_choices):
     """
     Contructs a k-univeral binary string_result
     """
+    print(["".join(item) for item in product(char_choices, repeat=k)])
 
-    possibilities = ["".join(item) for item in product(char_choices, repeat=k)]
+    possibilities = generate_possible_kmers(k, char_choices)
     return sequence_reconstruction(possibilities)
 
 
-def generate_binary_kmers(k):
+def generate_possible_kmers(k, char_choices):
     """
-    Generates all possible binary k-mers for a
+    Generates all possible k-mers for a
     list of characters and some number, k
     """
-    return universal_string(k, "01")
+    return ["".join(item) for item in product(char_choices, repeat=k)]
+
+
+
+
+def debruijn_graph(k, text):
+    """
+    Constructs a graph of length |text| - k + 1 in the form
+    of an adjacency list
+    """
+
+    de_bruijn_dict = OrderedDict()
+
+    for kmer in (text[i:i+k] for i in range(len(text)-k+1)):
+        if kmer[:-1] in de_bruijn_dict:
+            de_bruijn_dict[kmer[:-1]].add(kmer[1:])
+        else:
+            de_bruijn_dict[kmer[:-1]] = {kmer[1:]}
+
+    debruijn = [' -> '.join([item[0], ','.join(item[1])]) for item in de_bruijn_dict.items()]
+
+    print(debruijn)
+    return debruijn
+
+

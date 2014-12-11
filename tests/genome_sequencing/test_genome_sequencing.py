@@ -3,7 +3,7 @@ from genome_sequencing.genome_sequencing import (
     sequence_composition,
     sequence_reconstruction,
     overlap_list,
-    universal_string)
+    universal_string, debruijn_graph)
 
 
 class GenomeSequencingTest(unittest.TestCase):
@@ -91,7 +91,24 @@ class GenomeSequencingTest(unittest.TestCase):
         choices = "01"
 
         univ_string = universal_string(k, choices)
-        print(univ_string)
+        #print(univ_string)
+
+
+    def test_debruijn_graph(self):
+
+
+        k = 12
+
+        with open("../input_data/genome_sequencing/debruijn_graph.txt", "r") as f:
+            string = f.read().strip()
+
+        graph = debruijn_graph(k, string)
+        print(graph)
+
+        with open("../output_data/genome_sequencing/debruijn_graph.txt", 'w') as f:
+            f.write("\n".join([item for item in graph]))
+
+
 
 
 
