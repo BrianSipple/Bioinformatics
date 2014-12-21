@@ -13,6 +13,7 @@ def min_number_of_coins(money, coin_choices):
     """
 
     min_num_coins = [0]
+    max_array_length = max(coin_choices)  # TODO: Ensure that the array never exceeds this size
 
     for i in range(1, money + 1):
         min_num_coins.append(money * money)  # initialize a maximum for this array position at the start of the iteration
