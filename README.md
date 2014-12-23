@@ -1,4 +1,4 @@
 BioInformatics
 ==============
 
-An ongoing library of solutions to BioInformatics-related problems
+An ongoing library of solutions (and tests) to BioInformatics-related problems.
