@@ -57,3 +57,49 @@ def south_or_east(i, j):
         y = south_or_east(i, j - 1) + eastward_edge_weight(i, j-1)
 
     return max(x, y)
+
+
+
+def longest_path_in_graph(n, m, down, right):
+    """
+    dynamic programming algorithm for finding the
+    length of a longest path in the Manhattan Tourist Problem.
+
+    Conceptually, we can think of down-i-j and right-i-j as being
+    the respective weights of the vertical and horizontal edges entering node (i, j).
+
+    We denote the matrices holding down-i-j and right-i-j as `Down` and `Right`, respectively.
+    """
+
+    # Initialize the graph
+    graph = [[0] * m] * n
+
+
+    if n == 0 and m == 0:
+        return 0
+
+    y = -1 * (n ** n)  # Initialize an impossible minimum for y and x (rows and columns)
+    x = -1 * (m ** m)
+
+    for i in range(1, n):
+        graph[i][0] = graph[i-1][0] + down
+
+    for j in range(1, m):
+        graph[0][j] = graph[0][j-1] + right
+
+    # if n > 0:
+    #     y = longest_path_in_graph(n - 1, m, down, right) + down
+    #
+    # if m > 0:
+    #     x = longest_path_in_graph(n, m-1, down, right) + right
+
+    for ii in range(n):
+        for jj in range(m):
+            graph[ii][jj] = max(graph[ii-1][j] + down, graph[ii][jj-1] + right)
+
+    # The final value should be a result of computing the longest possible path!
+    return graph[n][m]
+
+
+
+
